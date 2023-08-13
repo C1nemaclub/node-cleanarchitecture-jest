@@ -5,16 +5,22 @@ import { UserRepository } from '../../../infrastructure/repository/user.reposito
 import userRouter from '../../../infrastructure/router/user.router';
 import request from 'supertest';
 
-jest.mock('../../../infrastructure/repository/user.repository', () => {
-  return {
-    UserRepository: jest.fn().mockImplementation(() => {
-      return {
-        saveUser: jest.fn(),
-        getUsers: jest.fn(),
-      };
-    }),
-  };
-});
+const app = express();
+app.use(express.json());
+app.use('/users', userRouter);
+
+const server = app.listen(0); // Listen on a dynamic port
+
+// jest.mock('../../../infrastructure/repository/user.repository', () => {
+//   return {
+//     UserRepository: jest.fn().mockImplementation(() => {
+//       return {
+//         saveUser: jest.fn(),
+//         getUsers: jest.fn(),
+//       };
+//     }),
+//   };
+// });
 
 jest.mock('../../../domain/usecase/user.usecase', () => {
   return jest.fn().mockImplementation(() => {
@@ -25,25 +31,19 @@ jest.mock('../../../domain/usecase/user.usecase', () => {
   });
 });
 
-const app = express();
-app.use(express.json());
-app.use('/users', userRouter);
-
-const server = app.listen(0); // Listen on a dynamic port
-
 afterAll(() => {
   server.close();
 });
 
 describe('UserRouter', () => {
-  let userController: UserController;
-  let userUseCase: UserUseCase;
-  let userRepository: UserRepository;
+  // let userController: UserController;
+  // let userUseCase: UserUseCase;
+  // let userRepository: UserRepository;
 
   beforeAll(() => {
-    userRepository = new UserRepository();
-    userUseCase = new UserUseCase(userRepository);
-    userController = new UserController(userUseCase);
+    // userRepository = new UserRepository();
+    // userController = new UserController(userUseCase);
+    // userUseCase = new UserUseCase(userRepository);
   });
   beforeEach(() => {
     jest.clearAllMocks();
@@ -55,16 +55,19 @@ describe('UserRouter', () => {
     expect(response.body).toMatchObject({ result: true });
     expect(response.status).toBe(201);
   });
-  test('should return empty array with 200', async () => { 
+  test('should return empty array with 200', async () => {
     const response = await request(server).get('/users');
-    expect(response.body).toMatchObject({ result: [] });
     expect(response.status).toBe(200);
-   })
 
-   test('should return a 400 status code', async () => { 
+    expect(response.body).toEqual({ result: [] });
+  });
+
+  test('should return a 400 status code', async () => {
     const payload = { name: 'Santiago' };
     const response = await request(server).post('/users').send(payload);
-    expect(response.body).toMatchObject({ message: "Name and email are required" });
+    expect(response.body).toMatchObject({
+      message: 'Name and email are required',
+    });
     expect(response.status).toBe(400);
-    })
+  });
 });
