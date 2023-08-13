@@ -1,0 +1,5 @@
+#ignore stuff
+node_modules
+node_modules/**
+coverage
+coverage/**
